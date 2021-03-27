@@ -40,17 +40,6 @@ shipApp <-function(...){
     
     # Call dropdown module and save user input as result
     dropdowns <- dropdownsServer('dropdowns')
-    
-    # Define a function to get distances from point A to B that can be used easily with apply 
-    # Called from df() to find the longest segment
-    getDistances <- function(x){
-      
-      # These columns correspond to  lon 1, lon 2, lat 1, lat 2
-      gdist(x[1],x[2],x[3],x[4], units='m')
-
-      # An alternative geodesic distance function I tried -- same results (requires a different package)
-      # geosphere::distGeo(c(x[1], x[2]),c(x[3],x[4]))
-    }
 
     # Extract the longest distance and pass it as a dataframe to note and map outputs
     # format: Endpoint Lat, Endpoint Lon, Endpoint Datetime, and similarly for the start point of the segment
@@ -58,24 +47,15 @@ shipApp <-function(...){
 
       # Validate dropdown values were chosen
       validate(need(req(dropdowns$user_vessel())!='Choose Vessel', message = FALSE))
-
-      # Select only the lon, lat, and times for the selected vessel and organize from most to least recent
-      test_ships <- dataset %>% filter(SHIPNAME==dropdowns$user_vessel()) %>%
-        select(LON, LAT, DATETIME) %>%
-        mutate(DATETIME = as.POSIXct(DATETIME, format = '%Y-%m-%dT%H:%M:%OS' , tz = 'UTC')) %>%
-        arrange(desc(DATETIME))
-
-      # Build a dataframe where each row contains two points - current and past - and their timestamps
-      test_ships$prev_lon <- c(test_ships$LON[-1], tail(test_ships$LON,1))
-      test_ships$prev_lat <- c(test_ships$LAT[-1], tail(test_ships$LAT,1))
-      test_ships$prev_datetime <- structure(c(test_ships$DATETIME[-1],tail(test_ships$DATETIME,1)), tzone='UTC')
+      
+      # Build a dataframe with all segments where each row contains an end and start of segment
+      segments <- allSegments(dataset, shipname = dropdowns$user_vessel())
 
       # Get the distances between each pair; which.max will later choose the earlier one (recent) if there is a tie
-      distances <- apply(test_ships %>% select(-DATETIME, -prev_datetime),1,getDistances)
+      distances <- apply(segments %>% select(-DATETIME, -prev_datetime), 1, getDistances)
 
       # Return a single-row dataframe at the max distance with the two points, times, and distance between them
-      return(test_ships[which.max(distances),] %>% mutate(distance=max(distances)))
-
+      return(segments[which.max(distances),] %>% mutate(distance=max(distances)))
 
     })
 
@@ -117,7 +97,7 @@ shipApp <-function(...){
         addPolylines(lng = c(df()$LON, df()$prev_lon), lat = c(df()$LAT, df()$prev_lat), weight=2, color='black',dashArray = '4')
 
     })
-  }
+  } # end of server
   
   shinyApp(ui, server, ...)
 }

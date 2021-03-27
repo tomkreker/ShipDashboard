@@ -5,6 +5,6 @@ account: tomkremer
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3871435
-bundleId: 4400417
+bundleId: 4400470
 url: https://tomkremer.shinyapps.io/shipdashboard/
-when: 1616818506.98128
+when: 1616821353.34079
