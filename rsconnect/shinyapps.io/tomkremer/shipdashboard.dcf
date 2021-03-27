@@ -1,0 +1,10 @@
+name: shipdashboard
+title:
+username:
+account: tomkremer
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3871435
+bundleId: 4400417
+url: https://tomkremer.shinyapps.io/shipdashboard/
+when: 1616818506.98128
